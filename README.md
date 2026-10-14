@@ -1,5 +1,7 @@
 # Bulk — Diet & Workout Tracker (Glass PWA)
 
+**Live:** [bulking-tracker-pro.vercel.app](https://bulking-tracker-pro.vercel.app) · installable on iPhone, Android and desktop
+
 A single installable app — works on **iPhone, Android, and desktop** from one codebase — with an Apple/WhatsApp-style frosted-glass UI and AI meal scanning powered by Claude Vision.
 
 ## What's in this build
