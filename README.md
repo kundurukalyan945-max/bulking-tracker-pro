@@ -53,7 +53,7 @@ That's it — `api/scan.js` ships as a Vercel serverless function automatically,
 
 **🆓 `GEMINI_API_KEY`** — genuinely free
 
-Grab one at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Sign in with Google, no card, no billing screen, ever. Runs on Gemini 2.5 Flash, which handles the vision task fine.
+Grab one at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Sign in with Google, no card, no billing screen, ever. Runs on Gemini 3.8 Flash, which handles the vision task fine.
 
 **→ recommended if you just want it working right now.**
 

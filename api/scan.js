@@ -5,7 +5,7 @@
 //   GEMINI_API_KEY     from aistudio.google.com/apikey  (free tier, no card required, used if ANTHROPIC_API_KEY is absent)
 // Optional:
 //   CLAUDE_MODEL   defaults to claude-sonnet-5-5   (only used with ANTHROPIC_API_KEY)
-//   GEMINI_MODEL   defaults to gemini-2.5-flash     (only used with GEMINI_API_KEY)
+//   GEMINI_MODEL   defaults to gemini-3.8-flash     (only used with GEMINI_API_KEY)
 //   ALLOWED_ORIGIN e.g. https://your-app.vercel.app (defaults to *)
 
 const SYSTEM = `You are a nutrition analyst. The user sends a photo of food.
@@ -89,7 +89,7 @@ async function callClaude(key, image, mediaType) {
 }
 
 async function callGemini(key, image, mediaType) {
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   const r = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
     {
