@@ -19,13 +19,18 @@ The AI scan needs a tiny server function to keep your Anthropic API key secret, 
 
 1. This repo is already on GitHub — just import it (no re-push needed).
 2. On [vercel.com](https://vercel.com) → **Add New Project** → import `bulking-tracker-pro`.
-3. In **Settings → Environment Variables**, add:
-   - `ANTHROPIC_API_KEY` = your key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
+3. In **Settings → Environment Variables**, add **one** of the two keys below.
 4. Deploy. You'll get a URL like `https://bulk-tracker.vercel.app`.
 
-**Getting the API key for free:** sign up at [console.anthropic.com](https://console.anthropic.com) (no credit card needed) and new accounts get **$5 in free credit** automatically. Each meal scan costs roughly $0.01–0.02, so that's 250–500 free scans — plenty to run this personally without ever paying. Go to **Settings → API Keys → Create Key**, copy it, and paste it into the Vercel env var above.
+That's it — `/api/scan` is live automatically because `api/scan.js` is a Vercel serverless function. It supports two providers; set whichever key you have and it's picked up automatically (Anthropic takes priority if both are set).
 
-That's it — `/api/scan` is live automatically because `api/scan.js` is a Vercel serverless function.
+**Option A — genuinely free, no card ever (recommended if you just want it working now):**
+`GEMINI_API_KEY` = a key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Sign in with Google, no credit card, no billing step. The free tier covers Gemini 2.5 Flash, which handles photo analysis fine — this app uses it with the same forced-JSON prompt either way.
+
+**Option B — Claude Vision (what this app was built around):**
+`ANTHROPIC_API_KEY` = a key from [console.anthropic.com](https://console.anthropic.com/settings/keys). New accounts get **$5 free credit** automatically in supported regions (not guaranteed everywhere) — each scan costs ~$0.01–0.02, so that's 250–500 scans. If your account shows a $0 balance with this error — *"Your credit balance is too low to access the Anthropic API"* — go to Settings → Plans & Billing and either wait for the credit to apply or add a small amount; some regions don't get it automatically.
+
+Either key goes in the same place: Vercel → your project → **Settings → Environment Variables**. Name it exactly `ANTHROPIC_API_KEY` or `GEMINI_API_KEY` (the Value field is where the actual key goes — the Key/Name field only accepts the variable name, letters and underscores, no hyphens). Save, then **Deployments → ⋯ → Redeploy** so the new variable takes effect.
 
 ## 2. Install it like a real app
 

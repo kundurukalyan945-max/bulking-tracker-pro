@@ -1,9 +1,12 @@
 // Vercel serverless function: POST /api/scan
-// Keeps your Anthropic API key on the server so it never reaches the browser.
-// Env vars (set in Vercel dashboard):
-//   ANTHROPIC_API_KEY  (required)  from console.anthropic.com
-//   CLAUDE_MODEL       (optional)  defaults to claude-sonnet-5-5
-//   ALLOWED_ORIGIN     (optional)  e.g. https://your-app.vercel.app  (defaults to *)
+// Keeps your API key on the server so it never reaches the browser.
+// Supports two providers — set ONE of these in Vercel (Settings -> Environment Variables):
+//   ANTHROPIC_API_KEY  from console.anthropic.com  (paid; $5 free trial credit, not guaranteed every region)
+//   GEMINI_API_KEY     from aistudio.google.com/apikey  (free tier, no card required, used if ANTHROPIC_API_KEY is absent)
+// Optional:
+//   CLAUDE_MODEL   defaults to claude-sonnet-5-5   (only used with ANTHROPIC_API_KEY)
+//   GEMINI_MODEL   defaults to gemini-2.5-flash     (only used with GEMINI_API_KEY)
+//   ALLOWED_ORIGIN e.g. https://your-app.vercel.app (defaults to *)
 
 const SYSTEM = `You are a nutrition analyst. The user sends a photo of food.
 Identify every distinct food or drink item visible and estimate nutrition for the portion shown.
@@ -19,8 +22,11 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.status(500).json({ error: 'Server is missing ANTHROPIC_API_KEY' });
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!anthropicKey && !geminiKey) {
+    return res.status(500).json({ error: 'Server is missing an API key. Set ANTHROPIC_API_KEY or GEMINI_API_KEY in Vercel.' });
+  }
 
   const body = typeof req.body === 'string' ? safeParse(req.body) : req.body || {};
   const image = body.image;
@@ -29,36 +35,10 @@ module.exports = async (req, res) => {
   if (image.length > 3500000) return res.status(413).json({ error: 'Image too large. Try again.' });
 
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5',
-        max_tokens: 900,
-        system: SYSTEM,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } },
-              { type: 'text', text: 'Analyze this meal and return the JSON.' },
-            ],
-          },
-        ],
-      }),
-    });
+    const text = anthropicKey
+      ? await callClaude(anthropicKey, image, mediaType)
+      : await callGemini(geminiKey, image, mediaType);
 
-    const data = await r.json();
-    if (!r.ok) {
-      const msg = (data && data.error && data.error.message) || 'Claude API error';
-      return res.status(r.status === 401 ? 500 : 502).json({ error: msg });
-    }
-
-    const text = (data.content || []).map((c) => c.text || '').join('');
     const parsed = extractJson(text);
     const foods = (parsed && Array.isArray(parsed.foods) ? parsed.foods : []).map((f) => ({
       name: String(f.name || 'Food').slice(0, 80),
@@ -71,9 +51,73 @@ module.exports = async (req, res) => {
     }));
     return res.status(200).json({ foods });
   } catch (e) {
-    return res.status(500).json({ error: 'Scan failed: ' + (e && e.message ? e.message : 'unknown error') });
+    return res.status(e.status || 500).json({ error: e.message || 'Scan failed' });
   }
 };
+
+async function callClaude(key, image, mediaType) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5',
+      max_tokens: 900,
+      system: SYSTEM,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } },
+            { type: 'text', text: 'Analyze this meal and return the JSON.' },
+          ],
+        },
+      ],
+    }),
+  });
+  const data = await r.json();
+  if (!r.ok) {
+    const msg = (data && data.error && data.error.message) || 'Claude API error';
+    const err = new Error(msg);
+    err.status = r.status === 401 ? 500 : 502;
+    throw err;
+  }
+  return (data.content || []).map((c) => c.text || '').join('');
+}
+
+async function callGemini(key, image, mediaType) {
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: SYSTEM + '\n\nAnalyze this meal and return the JSON.' },
+              { inline_data: { mime_type: mediaType, data: image } },
+            ],
+          },
+        ],
+        generationConfig: { responseMimeType: 'application/json' },
+      }),
+    }
+  );
+  const data = await r.json();
+  if (!r.ok) {
+    const msg = (data && data.error && data.error.message) || 'Gemini API error';
+    const err = new Error(msg);
+    err.status = r.status === 400 || r.status === 403 ? 500 : 502;
+    throw err;
+  }
+  const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  return parts.map((p) => p.text || '').join('');
+}
 
 function num(v) {
   const n = Math.round(Number(v));
