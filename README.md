@@ -9,17 +9,19 @@ A single installable app — works on **iPhone, Android, and desktop** from one 
 - **Fully editable workouts**: add, rename or delete any day or exercise — nothing is hardcoded.
 - **AI meal scanning**: photograph or upload a plate, Claude Vision identifies each food and estimates kcal/protein/carbs/fat, with a portion-size slider to correct for serving size.
 - **Installable PWA**: manifest + service worker + icon set, so it installs to the home screen and works offline (except scanning, which needs the network).
-- **No backend database** — data is stored in the browser (`localStorage`). See "Accounts & cloud sync" below for what adding that would involve.
+- **Optional accounts & sync**: sign in with email, Google, Facebook or phone, data synced via Firebase — or skip it and stay fully local on one device. See "Accounts & cloud sync" below.
 
 ## 1. Deploy it (Vercel — free)
 
 The AI scan needs a tiny server function to keep your Anthropic API key secret, so GitHub Pages alone won't run it — use **Vercel**, which is free and hosts both the static app and the function together.
 
-1. Push this folder to a GitHub repo (or drag-and-drop it at vercel.com — no CLI needed).
-2. On [vercel.com](https://vercel.com) → **Add New Project** → import the repo.
+1. This repo is already on GitHub — just import it (no re-push needed).
+2. On [vercel.com](https://vercel.com) → **Add New Project** → import `bulking-tracker-pro`.
 3. In **Settings → Environment Variables**, add:
    - `ANTHROPIC_API_KEY` = your key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
 4. Deploy. You'll get a URL like `https://bulk-tracker.vercel.app`.
+
+**Getting the API key for free:** sign up at [console.anthropic.com](https://console.anthropic.com) (no credit card needed) and new accounts get **$5 in free credit** automatically. Each meal scan costs roughly $0.01–0.02, so that's 250–500 free scans — plenty to run this personally without ever paying. Go to **Settings → API Keys → Create Key**, copy it, and paste it into the Vercel env var above.
 
 That's it — `/api/scan` is live automatically because `api/scan.js` is a Vercel serverless function.
 
