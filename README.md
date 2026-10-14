@@ -26,7 +26,6 @@ one codebase → **iPhone · Android · desktop**, with a frosted-glass UI that 
 |---|---|
 | 🧊 **glass UI** | translucent cards, blurred nav, iOS-style sheets, system blue — not another bootstrap dashboard |
 | 📸 **AI scan** | photograph a meal → an LLM reads the plate and estimates kcal / protein / carbs / fat |
-| 🔖 **barcode lookup** | packaged food? type the barcode → pulled straight from Open Food Facts, no AI needed |
 | 🏋️ **your split, your rules** | every workout day and exercise is add/edit/delete, nothing hardcoded |
 | 💧 **the whole stack** | water, body weight, sleep, supplements, 7-day charts |
 | 🔐 **accounts, optional** | email, Google, Facebook, or phone — synced via Firebase, or skip it and stay fully local |
@@ -135,7 +134,6 @@ That config object is a public client identifier, not a secret — fine to ship 
 ```
 index.html              the whole app — UI, logic, Firebase config, one file
 api/scan.js             serverless function — secure AI scan proxy (Claude or Gemini)
-api/barcode.js          serverless function — Open Food Facts barcode lookup (free, no key)
 manifest.webmanifest    PWA install metadata
 sw.js                   service worker — offline caching, network-first
 icon-*.png              app icons (any / maskable / apple-touch)

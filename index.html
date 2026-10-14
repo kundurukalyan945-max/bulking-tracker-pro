@@ -331,32 +331,8 @@ function rScan(){
   <div class="head"><div><h1>Scan</h1><div class="sub">Photograph a meal. Claude estimates the nutrition.</div></div></div>
   ${scan.img?`<img class="preview" src="${scan.img}" alt="Meal photo">`:`<div class="drop">${ico.cam}<div>Take a clear photo from above with good light</div></div>`}
   <div class="g2" style="margin-bottom:14px"><button class="btn" onclick="$('#fcam').click()">Take photo</button><button class="btn ghost" onclick="$('#flib').click()">Choose photo</button></div>
-  <button class="btn ghost full" style="margin-bottom:14px" onclick="openBarcode()">🔖 Enter barcode instead</button>
   ${body}
   <div class="sub" style="text-align:center;margin-top:10px">Estimates only. Adjust portion size to match your plate.</div>`;
-}
-function openBarcode(){openSheet(`<h2>Look up a barcode</h2>
-  <div class="sub" style="margin:-4px 0 12px">Type the number under the barcode on a packaged food.</div>
-  <label>Barcode number</label><input id="bcode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 8901030895556" onkeydown="if(event.key==='Enter')lookupBarcode()">
-  <div id="bcerr" class="sub" style="color:var(--orange);margin-top:8px"></div>
-  <div class="btns"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn" id="bcbtn" onclick="lookupBarcode()">Look up</button></div>`);
-  setTimeout(()=>{const el=$('#bcode');if(el)el.focus()},50)}
-async function lookupBarcode(){
-  const code=($('#bcode').value||'').replace(/\D/g,'');
-  const errEl=$('#bcerr'),btn=$('#bcbtn');
-  if(!code||code.length<6){errEl.textContent='Enter a valid barcode number.';return}
-  errEl.textContent='';btn.disabled=true;btn.textContent='Looking up…';
-  try{
-    const r=await fetch((S.apiBase||'')+'/api/barcode?code='+encodeURIComponent(code));
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(j.error||'Lookup failed ('+r.status+')');
-    if(!j.found){errEl.textContent='No product found for that barcode. Try adding it manually instead.';btn.disabled=false;btn.textContent='Look up';return}
-    scan={img:null,items:[{name:j.name,serving:j.serving,kcal:j.kcal,protein:j.protein,carbs:j.carbs,fat:j.fat,confidence:j.confidence||'high'}],scale:1,busy:false,err:''};
-    closeSheet();go('scan');rScan();toast('Found '+j.name)
-  }catch(e){
-    errEl.textContent=/Failed to fetch|NetworkError/i.test(e.message)?'Cannot reach the lookup server. Check your internet, or the API address in More → Settings.':e.message;
-    btn.disabled=false;btn.textContent='Look up'
-  }
 }
 function prep(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{const m=1024,r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.8))};
