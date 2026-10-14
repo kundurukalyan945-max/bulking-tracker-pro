@@ -1,185 +1,99 @@
-<div align="center">
+# Bulk — Diet & Workout Tracker (Glass PWA)
 
-<img src="https://img.shields.io/badge/Built%20with-HTML%20%2B%20JS-orange?style=for-the-badge&logo=html5" />
-<img src="https://img.shields.io/badge/AI%20Powered-Claude%20Vision-green?style=for-the-badge&logo=anthropic" />
-<img src="https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge" />
-<img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" />
+A single installable app — works on **iPhone, Android, and desktop** from one codebase — with an Apple/WhatsApp-style frosted-glass UI and AI meal scanning powered by Claude Vision.
 
-# 💪 Bulking Tracker Pro
+## What's in this build
 
-### AI-Powered Personal Fitness & Nutrition Tracker
+- **Glass UI**: translucent cards, blurred tab bar, iOS-style bottom sheets, system blue (`#0a84ff`) accent — same visual language as iOS/WhatsApp.
+- **4 tabs**: Diet · Scan · Workout · More (Water, Body weight, Supplements, Charts, Settings nested inside More).
+- **Fully editable workouts**: add, rename or delete any day or exercise — nothing is hardcoded.
+- **AI meal scanning**: photograph or upload a plate, Claude Vision identifies each food and estimates kcal/protein/carbs/fat, with a portion-size slider to correct for serving size.
+- **Installable PWA**: manifest + service worker + icon set, so it installs to the home screen and works offline (except scanning, which needs the network).
+- **No backend database** — data is stored in the browser (`localStorage`). See "Accounts & cloud sync" below for what adding that would involve.
 
-**A full-featured fitness web app in a single HTML file — no install, no backend, works on any device.**
+## 1. Deploy it (Vercel — free)
 
-[🚀 Live Demo](https://kundurukalyan945-max.github.io/bulking-tracker-pro/BulkingTrackerPro.html) · [📂 Source Code](https://github.com/kundurukalyan945-max/bulking-tracker-pro) · [👤 Portfolio](https://github.com/kundurukalyan945-max)
+The AI scan needs a tiny server function to keep your Anthropic API key secret, so GitHub Pages alone won't run it — use **Vercel**, which is free and hosts both the static app and the function together.
 
-<br/>
+1. Push this folder to a GitHub repo (or drag-and-drop it at vercel.com — no CLI needed).
+2. On [vercel.com](https://vercel.com) → **Add New Project** → import the repo.
+3. In **Settings → Environment Variables**, add:
+   - `ANTHROPIC_API_KEY` = your key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
+4. Deploy. You'll get a URL like `https://bulk-tracker.vercel.app`.
 
-> Built by **Kalyan Kunduru** — B.Tech CSE (AI/ML) @ SVCE Bengaluru 2026
+That's it — `/api/scan` is live automatically because `api/scan.js` is a Vercel serverless function.
 
-</div>
+## 2. Install it like a real app
 
----
+**iPhone (Safari):** open the URL → Share icon → **Add to Home Screen**. It opens full-screen with no browser bar, like a native app.
 
-## 🎯 What is this?
+**Android (Chrome):** open the URL → menu (⋮) → **Install app** (or Chrome shows an "Install" banner automatically).
 
-Bulking Tracker Pro is a **complete fitness tracking app** I built for my personal bulking journey — going from 55kg with a target of +0.3kg/week. Instead of using 3-4 different apps, I built one single tool that handles everything:
+**Desktop (Chrome/Edge):** an install icon appears in the address bar → click it to install as a standalone window.
 
-- 🍽️ Every meal logged and macro-tracked
-- 📸 **AI scans food photos** and fills in nutrition automatically
-- 🏋️ My full PPL workout split — fully customizable
-- ⚖️ Body weight curve over the bulk
-- 💧 Water, sleep, supplements — all in one place
+No App Store / Play Store submission needed — this is what makes a PWA the fastest way to get one codebase onto all three platforms.
 
----
-
-## ✨ Features
-
-| Tab | Feature | Details |
-|-----|---------|---------|
-| 🍽️ **Diet** | Macro tracking | Calories, Protein, Carbs, Fat with live progress bars |
-| 🍽️ **Diet** | Quick add chips | 15 common Indian bulking foods — one tap to log |
-| 🍽️ **Diet** | Day navigation | Browse any past or future day |
-| 📸 **AI Scan** | Live camera | Opens phone/webcam camera to capture food |
-| 📸 **AI Scan** | Photo upload | Upload any food image from gallery |
-| 📸 **AI Scan** | Claude Vision AI | Identifies food, estimates portions, calculates all macros |
-| 📸 **AI Scan** | One-tap logging | Adds all detected foods to your diet log instantly |
-| 🏋️ **Workout** | PPL Split | 6-day Push/Pull/Legs program pre-loaded |
-| 🏋️ **Workout** | Full editor | Add, edit, delete exercises and entire workout days |
-| 🏋️ **Workout** | Personal Records | Log and track PRs for any lift |
-| 📊 **Menu** | 7-day charts | Calorie and protein bar/line charts (Chart.js) |
-| 📊 **Menu** | Weekly dots | Visual diet and workout consistency tracker |
-| 📊 **Menu** | Body weight | Log daily weight, see bulk curve chart |
-| 📊 **Menu** | Sleep log | Track hours and quality with visual bar |
-| 📊 **Menu** | Water tracker | 14-glass tap tracker = 3.5L daily goal |
-| 📊 **Menu** | Supplements | Daily check-off for full stack with weekly adherence |
-| 💾 **All** | Offline storage | Everything saved to localStorage — works without internet |
-
----
-
-## 🤖 AI Food Scanner — How It Works
-
-This is the standout feature. Using **Claude Vision API (claude-sonnet-4-6)**:
+## 3. How the Claude Vision scanning works
 
 ```
-📸 Take photo  →  🤖 Claude AI analyzes  →  📋 Macros appear  →  ✅ One tap to log
+Phone camera → compress to ≤1024px JPEG (in-browser, instant)
+            → POST base64 image to YOUR /api/scan endpoint
+            → api/scan.js attaches your secret ANTHROPIC_API_KEY server-side
+            → calls Claude (model: claude-sonnet-5-5) with the image + a
+              system prompt that forces strict JSON output:
+              {"foods":[{"name","serving","kcal","protein","carbs","fat","confidence"}]}
+            → response is validated/sanitized and sent back to the app
+            → you get an editable list with a portion-size slider
 ```
 
-1. Open the **AI Scan** tab
-2. Tap **Open Camera** → point at your food
-3. Tap **Capture** (or upload a photo)
-4. Claude identifies every food item, estimates portion size, calculates kcal/protein/carbs/fat
-5. Select which meal to assign it to → tap **Add All to Diet Log**
+**Why it's a server function and not a direct browser call:** your Anthropic API key must never ship inside client-side JavaScript — anyone could open dev tools and steal it. `api/scan.js` runs on Vercel's servers, holds the key in an environment variable, and is the only thing that ever talks to `api.anthropic.com`. The browser only ever talks to your own `/api/scan` endpoint.
 
-Handles Indian foods — dal, roti, paneer, soya chunks, rice, curd, and more.
+**Cost:** each scan is one Claude API call (~$0.01–0.02 at current Sonnet pricing for a compressed photo + short JSON reply). There's no built-in rate limiting — for personal use that's irrelevant, but if you ever share the link publicly, add a simple per-IP limit in `api/scan.js`.
 
----
+**If you deploy the app and the function on different domains**, open **More → Settings → API address** in the app and paste your Vercel URL — otherwise leave it blank (same-origin is the default and what you get with this setup).
 
-## 🛠️ Tech Stack
+## 4. Accounts & cloud sync (now included)
 
-```
-Frontend     →  HTML5 + CSS3 + Vanilla JavaScript (zero frameworks)
-Charts       →  Chart.js 4.4.1
-AI Vision    →  Anthropic Claude Vision API (claude-sonnet-4-6)
-Fonts        →  Google Fonts (Inter + DM Mono)
-Storage      →  Browser localStorage (fully offline)
-Deployment   →  GitHub Pages (single file, instant deploy)
-```
+Sign in with **email/password, Google, Facebook, or phone number (OTP)** and your data follows you across devices — it's stored in Firestore under your user ID, not just this browser's `localStorage`. If you skip sign-in, the app works exactly as before, fully local to the device.
 
-No Node.js. No React. No build step. Just one `.html` file.
+**It ships unconfigured on purpose** — until you add your own Firebase keys, the login screen never appears and nothing changes from the local-only build. To turn it on:
 
----
+1. **Create a project** at [console.firebase.google.com](https://console.firebase.google.com) → Add project (the free Spark plan covers Email, Google and Facebook sign-in; Phone/SMS may require upgrading to the pay-as-you-go Blaze plan — Email + Google alone is enough if you'd rather avoid that).
+2. **Authentication → Get started → Sign-in method** → enable:
+   - **Email/Password** — one click.
+   - **Google** — one click.
+   - **Facebook** — needs an App ID + App Secret from [developers.facebook.com](https://developers.facebook.com); Firebase shows you the OAuth redirect URI to paste into that Facebook app's settings.
+   - **Phone** — one click to enable (billing note above).
+3. **Authentication → Settings → Authorized domains** → add your Vercel domain (e.g. `bulk-tracker.vercel.app`), otherwise sign-in popups will be blocked.
+4. **Firestore Database → Create database** → start in **production mode**, pick a region close to you.
+5. **Firestore → Rules**, paste this so each user can only ever read/write their own data, then Publish:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{uid} {
+         allow read, write: if request.auth != null && request.auth.uid == uid;
+       }
+     }
+   }
+   ```
+6. **Project settings (⚙️) → General → Your apps → Add app → Web (</>)** → copy the `firebaseConfig` object it gives you.
+7. Open `index.html`, find `const FIREBASE_CONFIG={apiKey:'YOUR_API_KEY',...}` near the top of the `<script>` block, and paste your real values in. Redeploy (push to GitHub / re-upload to Vercel).
 
-## 📱 Screenshots
+That's it — the login screen now appears, with "Continue without an account" always available for anyone who'd rather stay local. This `firebaseConfig` is a public client identifier, not a secret — it's fine inside `index.html`, unlike the Anthropic key in `api/scan.js` which must never appear in client code.
 
-| Diet Log | AI Scanner | Workout Editor |
-|----------|-----------|----------------|
-| Macro grid with progress bars | Camera + AI result | Editable PPL split |
-| Quick-add Indian food chips | Portion detection | Add/edit/delete exercises |
-| Day navigation | One-tap log | Personal record tracker |
+**How sync works:** on sign-in, the app checks Firestore for existing data under your account — if found, it replaces what's on this device; if not, this device's data is pushed up as the starting point. After that, every change (food logged, workout edited, weight entry) saves to `localStorage` instantly and to Firestore about a second later, so it's quick offline and catches up once you're back online.
 
----
-
-## 🏃 How to Run
-
-### Option 1 — Live Demo (instant)
-```
-https://kundurukalyan945-max.github.io/bulking-tracker-pro/BulkingTrackerPro.html
-```
-
-### Option 2 — Download and open locally
-```bash
-# Clone the repo
-git clone https://github.com/kundurukalyan945-max/bulking-tracker-pro.git
-
-# Just open the file — no npm install, no build
-open bulking-tracker-pro/BulkingTrackerPro.html
-```
-
-### Option 3 — Direct download
-Click `BulkingTrackerPro.html` → **Download raw file** → Open in Chrome
-
----
-
-## 🎯 My Bulking Goals (built into the app)
+## File structure
 
 ```
-Starting weight   →  62 kg
-Weekly gain rate  →  +2.12 kg / week
-Daily calories    →  2800 kcal
-Daily protein     →  160g
-Daily carbs       →  330g
-Daily fat         →  70g
-Workout split     →  PPL — 6 days/week
-Water target      →  3.5L / day
+index.html              the entire app (UI + logic + Firebase config, one file)
+api/scan.js             Vercel serverless function — secure Claude Vision proxy
+manifest.webmanifest    PWA install metadata
+sw.js                   service worker (offline caching, network-first)
+icon-192.png / icon-512.png / icon-180.png   app icons
 ```
 
-Special ankle-friendly exercise substitutions included (leg press, Bulgarian split squat, seated calf raise) based on personal injury history.
+## Local testing without Vercel
 
----
-
-## 📂 Project Structure
-
-```
-bulking-tracker-pro/
-│
-├── BulkingTrackerPro.html   ← Entire app (HTML + CSS + JS in one file)
-└── README.md                ← This file
-```
-
----
-
-## 🔗 More Projects
-
-| Project | Description | Link |
-|---------|-------------|------|
-| 🤖 **AI Career Suite** | Multi-agent career toolkit (Resume, Interview, Jobs, Coach) | [View →](https://github.com/kundurukalyan945-max/ai-agent-2026) |
-| 💪 **Bulking Tracker Pro** | This project | You're here |
-
----
-
-## 👤 About Me
-
-**Kalyan Kunduru** — Final year B.Tech CSE (AI/ML) student at SVCE Bengaluru (2026)
-
-- 🎓 Specializing in AI/ML and Python full-stack development
-- 🏋️ 6-day PPL training, currently on a bulking phase
-- 💻 Building AI-powered tools and web apps
-- 📍 Based in Bengaluru, India
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=flat&logo=linkedin)](https://linkedin.com/in/your-linkedin-here)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=flat&logo=github)](https://github.com/kundurukalyan945-max)
-
----
-
-## 📄 License
-
-```
-MIT License — free to use, fork, and modify.
-```
-
----
-
-<div align="center">
-  <sub>Built with 💚 and a lot of protein shakes · Kalyan Kunduru 2026</sub>
-</div>
+The UI runs from any static server (`npx serve .`), but Scan will fail with "Cannot reach the scan server" since there's no function host — that's expected until it's deployed on Vercel.
